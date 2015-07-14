@@ -264,7 +264,7 @@ def configure(conf):
             conf.env.CFLAGS    = conf.get_compiler_flags(conf.env.COMPILER_CC, x)
             conf.env.LINKFLAGS = conf.get_linker_flags(conf.env.COMPILER_CXX, x)
             conf.env.STLIB     = STLIB
-            conf.env.append_value('INCLUDES', [p.abspath() for p in conf.srcnode.ant_glob(INCLUDES, dir=True, src=False)])
+            conf.env.append_value('INCLUDES', INCLUDES)
             conf.env.append_value('STLIBPATH', \
                 ["{LIBFOLDER}/{ARCH}/{VARIANT}".format(LIBFOLDER=p.abspath(), ARCH=y, VARIANT=x) for p in conf.srcnode.ant_glob(STLIBPATH, dir=True, src=False)])
             # Disable the shared lib boundary flag because it conflicts with static linking flags
