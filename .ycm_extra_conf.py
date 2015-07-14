@@ -30,7 +30,7 @@ def FlagsForFile(filename, **kwargs):
 
     flags.extend(lang_specific_flags[filetype])
 
-    includes = ['include'].extend(glob.glob(os.path.dirname(os.path.realpath(inspect.getfile(inspect.currentframe()))) + '/deps/*/include'))
+    includes = ['include'] + glob.glob(os.path.dirname(os.path.realpath(inspect.getfile(inspect.currentframe()))) + '/deps/*/include')
     defines  = []
 
     for i in includes:
