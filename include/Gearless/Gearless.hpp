@@ -31,4 +31,6 @@
 #ifndef _GEARLESS_HPP_
 #define _GEARLESS_HPP_
 
+#include <Gearless/TypeId.hpp>
+
 #endif // ! _GEARLESS_HPP_
