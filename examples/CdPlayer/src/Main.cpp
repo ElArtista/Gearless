@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <Gearless/Gearless.hpp>
+#include <Gearless/StateMachine.hpp>
 
 ///==============================================================
 ///= State Diagram
@@ -101,6 +102,16 @@ void StoppedAgain(const Stop&) { std::cout << "Playback already stopped." << std
         > {};
 */
 
+// The transitions
+using Transition1 = Gearless::Transition<Empty, OpenClose, Open, OpenDrawer>;
+using Transition2 = Gearless::Transition<Open, OpenClose, Empty, CloseDrawer>;
+
+// The table
+using TransitionTbl = Gearless::TransitionTable<Transition1, Transition2>;
+
+// The initial state
+using InitState = Empty;
+
 
 ///==============================================================
 ///= Sample Usage
@@ -108,17 +119,19 @@ void StoppedAgain(const Stop&) { std::cout << "Playback already stopped." << std
 
 void Test()
 {
-    /*
     Gearless::StateMachine<InitState, TransitionTbl> sm;
-    sm.Start();
+    //sm.Start();
     sm.ProcessEvent(OpenClose());
-    sm.ProcessEvent(CdDetected("Bee Gees Spirits Having Flown", Cd));
-    sm.ProcessEvent(Play());
-    sm.ProcessEvent(Pause());
-    sm.ProcessEvent(Stop());
-    sm.ProcessEvent(Stop());
-    sm.Stop();
+    sm.ProcessEvent(OpenClose());
+    /*
+    //sm.ProcessEvent(OpenClose());
+    //sm.ProcessEvent(CdDetected("Bee Gees Spirits Having Flown", Cd));
+    //sm.ProcessEvent(Play());
+    //sm.ProcessEvent(Pause());
+    //sm.ProcessEvent(Stop());
+    //sm.ProcessEvent(Stop());
     */
+    //sm.Stop();
 }
 
 int main()
