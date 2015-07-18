@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <Gearless/Gearless.hpp>
+#include <Gearless/StateMachine.hpp>
 
 ///==============================================================
 ///= State Diagram
@@ -56,13 +57,12 @@ void OnMainMenuReturn(const GoToMainMenu&) { std::cout << "Returning to MainMenu
 ///= Transition Table
 ///==============================================================
 
-/*
 // Alias to make the transition table more compact
 template <class PrevState, class Event, class NextState, void Fn(const Event&)>
 using tr = Gearless::Transition<PrevState, Event, NextState, Fn>;
 
 // The transition table
-using TransitionTbl = Gearless::TransitionTable<
+using TransitionTbl = Gearless::Packer<
     //    Start       Event          Next        Action             Guard
     //  +-----------+--------------+-----------+------------------+------------+
       tr< MainMenu  , LoadGame     , Loading   , OnLoading                     >,
@@ -78,7 +78,6 @@ using TransitionTbl = Gearless::TransitionTable<
 
 // The initial state
 using InitState = MainMenu;
-*/
 
 ///==============================================================
 ///= Sample Usage
@@ -86,16 +85,14 @@ using InitState = MainMenu;
 
 void Test()
 {
-    /*
     Gearless::StateMachine<InitState, TransitionTbl> sm;
-    //sm.Start();
+    sm.Start();
     sm.ProcessEvent(LoadGame());
     sm.ProcessEvent(PauseGame());
     sm.ProcessEvent(ResumeGame());
     sm.ProcessEvent(PauseGame());
     sm.ProcessEvent(GoToMainMenu());
-    //sm.Stop();
-    */
+    sm.Stop();
 }
 
 int main()

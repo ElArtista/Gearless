@@ -31,15 +31,81 @@
 #ifndef _STATE_MACHINE_HPP_
 #define _STATE_MACHINE_HPP_
 
+#include <memory>
+#include <vector>
+#include <tuple>
+#include <Gearless/TypeId.hpp>
+
 namespace Gearless
 {
-    template <class PrevState, class Event, class NextState, void Fn(const Event&)>
-    struct Transition;
+    template <class... Types>
+    struct Packer {};
 
-    template <class... Transition>
-    struct TransitionTable;
+    template <class Prev, class Ev, class Next, void Fn(const Ev&)>
+    struct Transition
+    {
+        using PrevState = Prev;
+        using Event = Ev;
+        using NextState = Next;
+        void (*F)(const Ev&) = Fn;
+    };
 
-    template <class InitState, class TransitionTable>
+    class TransitionInfo
+    {
+        public:
+            template<class Transit>
+            static TransitionInfo FromTransition()
+            {
+                TransitionInfo t;
+                t.mPrevStateTypeId = GetTypeId<typename Transit::PrevState>();
+                t.mEventTypeId = GetTypeId<typename Transit::Event>();
+                t.mNextStateTypeId = GetTypeId<typename Transit::NextState>();
+                return t;
+            }
+
+            TypeId GetPrevStateTypeId() const { return mPrevStateTypeId; };
+            TypeId GetEventTypeId() const { return mEventTypeId; };
+            TypeId GetNextStateTypeId() const { return mNextStateTypeId; };
+
+        private:
+            TypeId mPrevStateTypeId;
+            TypeId mEventTypeId;
+            TypeId mNextStateTypeId;
+    };
+
+    template <class... Transitions>
+    class TransitionTable
+    {
+        public:
+            TransitionTable()
+            {
+                Add();
+            }
+
+        private:
+            void Add()
+            {
+                mTransitions.insert(
+                        std::end(mTransitions),
+                        {TransitionInfo::FromTransition<Transitions>()...});
+            }
+
+            std::vector<TransitionInfo> mTransitions;
+    };
+
+    template <class... Transitions>
+    struct ConvertToTransitionTable
+    {
+        using type = TransitionTable<Transitions...>;
+    };
+
+    template <class... Transitions>
+    struct ConvertToTransitionTable<Packer<Transitions...>>
+    {
+        using type = typename ConvertToTransitionTable<Transitions...>::type;  
+    };
+
+    template <class InitState, class TransitionsPack>
     class StateMachine
     {
         public:
@@ -51,25 +117,33 @@ namespace Gearless
 
             template <class Event>
             void ProcessEvent(const Event& ev);
+
+        private:
+            /// Stores the currently active transition id
+            TypeId mCurStateTypeId;
+
+            /// The transition table translated into type id's
+            using TT = typename ConvertToTransitionTable<TransitionsPack>::type;
+            TT mTransitionTbl;
     };
 
-    template <class InitState, class TransitionTable>
-    inline void StateMachine<InitState, TransitionTable>::Start()
+    template <class InitState, class TransitionsPack>
+    inline void StateMachine<InitState, TransitionsPack>::Start()
     {
-        
+        mCurStateTypeId = GetTypeId<InitState>();
     }
 
-    template <class InitState, class TransitionTable>
-    inline void StateMachine<InitState, TransitionTable>::Stop()
+    template <class InitState, class TransitionsPack>
+    inline void StateMachine<InitState, TransitionsPack>::Stop()
     {
-        
+
     }
 
-    template <class InitState, class TransitionTable>
+    template <class InitState, class TransitionsPack>
     template <class Event>
-    inline void StateMachine<InitState, TransitionTable>::ProcessEvent(const Event& ev)
+    inline void StateMachine<InitState, TransitionsPack>::ProcessEvent(const Event& ev)
     {
-        
+        (void) ev;
     }
 }
 
