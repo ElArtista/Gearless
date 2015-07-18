@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <functional>
 #include <Gearless/Gearless.hpp>
 #include <Gearless/StateMachine.hpp>
 
@@ -58,22 +59,28 @@ void OnMainMenuReturn(const GoToMainMenu&) { std::cout << "Returning to MainMenu
 ///==============================================================
 
 // Alias to make the transition table more compact
-template <class PrevState, class Event, class NextState, void Fn(const Event&)>
+template <class PrevState, class Event, class NextState, typename Fn>
 using tr = Gearless::Transition<PrevState, Event, NextState, Fn>;
+
+using OnLoadingW        = Gearless::TFunct<LoadGame, OnLoading>;
+using OnMainGameStartW  = Gearless::TFunct<StartGame, OnMainGameStart>;
+using OnPauseW          = Gearless::TFunct<PauseGame, OnPause>;
+using OnResumeW         = Gearless::TFunct<ResumeGame, OnResume>;
+using OnMainMenuReturnW = Gearless::TFunct<GoToMainMenu, OnMainMenuReturn>;
 
 // The transition table
 using TransitionTbl = Gearless::Packer<
     //    Start       Event          Next        Action             Guard
-    //  +-----------+--------------+-----------+------------------+------------+
-      tr< MainMenu  , LoadGame     , Loading   , OnLoading                     >,
-    //  +-----------+--------------+-----------+------------------+------------+
-      tr< Loading   , StartGame    , Game      , OnMainGameStart               >,
-    //  +-----------+--------------+-----------+------------------+------------+
-      tr< Game      , PauseGame    , PauseMenu , OnPause                       >,
-    //  +-----------+--------------+-----------+------------------+------------+
-      tr< PauseMenu , ResumeGame   , Game      , OnResume                      >,
-      tr< PauseMenu , GoToMainMenu , MainMenu  , OnMainMenuReturn              >
-    //  +-----------+--------------+-----------+------------------+------------+
+    //  +-----------+--------------+-----------+-------------------+------------+
+      tr< MainMenu  , LoadGame     , Loading   , OnLoadingW                     >,
+    //  +-----------+--------------+-----------+-------------------+------------+
+      tr< Loading   , StartGame    , Game      , OnMainGameStartW               >,
+    //  +-----------+--------------+-----------+-------------------+------------+
+      tr< Game      , PauseGame    , PauseMenu , OnPauseW                       >,
+    //  +-----------+--------------+-----------+-------------------+------------+
+      tr< PauseMenu , ResumeGame   , Game      , OnResumeW                      >,
+      tr< PauseMenu , GoToMainMenu , MainMenu  , OnMainMenuReturnW              >
+    //  +-----------+--------------+-----------+-------------------+------------+
 >;
 
 // The initial state

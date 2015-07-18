@@ -38,21 +38,45 @@
 
 namespace Gearless
 {
+    ///==============================================================
+    ///= Packer
+    ///==============================================================
     template <class... Types>
     struct Packer {};
 
-    template <class Prev, class Ev, class Next, void Fn(const Ev&)>
+    ///==============================================================
+    ///= TFunct
+    ///==============================================================
+    template <class Ev, void(Fn)(const Ev&)>
+    struct TFunct
+    {
+        using FPtr = void(*)(const Ev&);
+        static FPtr f;
+    };
+
+    template <class Ev, void(Fn)(const Ev&)>
+    typename TFunct<Ev, Fn>::FPtr TFunct<Ev, Fn>::f = Fn;
+
+    ///==============================================================
+    ///= Transition
+    ///==============================================================
+    template <class Prev, class Ev, class Next, typename Fn>
     struct Transition
     {
         using PrevState = Prev;
         using Event = Ev;
         using NextState = Next;
-        void (*F)(const Ev&) = Fn;
+        using TransFn = Fn;
     };
 
+    ///==============================================================
+    ///= TransitionInfo
+    ///==============================================================
     class TransitionInfo
     {
         public:
+            using TF = void(*)(void);
+
             template<class Transit>
             static TransitionInfo FromTransition()
             {
@@ -60,27 +84,37 @@ namespace Gearless
                 t.mPrevStateTypeId = GetTypeId<typename Transit::PrevState>();
                 t.mEventTypeId = GetTypeId<typename Transit::Event>();
                 t.mNextStateTypeId = GetTypeId<typename Transit::NextState>();
+
+                using cont = typename Transit::TransFn;
+                t.mTransitionFn = reinterpret_cast<TF>(cont::f);
+
                 return t;
             }
 
             TypeId GetPrevStateTypeId() const { return mPrevStateTypeId; };
             TypeId GetEventTypeId() const { return mEventTypeId; };
             TypeId GetNextStateTypeId() const { return mNextStateTypeId; };
+            TF GetTransitionFn() const { return mTransitionFn; }
 
         private:
             TypeId mPrevStateTypeId;
             TypeId mEventTypeId;
             TypeId mNextStateTypeId;
+            TF mTransitionFn;
     };
 
+    ///==============================================================
+    ///= TransitionTable
+    ///==============================================================
     template <class... Transitions>
     class TransitionTable
     {
         public:
-            TransitionTable()
-            {
-                Add();
-            }
+            TransitionTable() { Add(); }
+
+            using const_iterator = std::vector<TransitionInfo>::const_iterator;
+            auto begin() -> const_iterator { return std::begin(mTransitions); }
+            auto end() -> const_iterator { return std::end(mTransitions); }
 
         private:
             void Add()
@@ -105,6 +139,9 @@ namespace Gearless
         using type = typename ConvertToTransitionTable<Transitions...>::type;  
     };
 
+    ///==============================================================
+    ///= StateMachine
+    ///==============================================================
     template <class InitState, class TransitionsPack>
     class StateMachine
     {
@@ -143,7 +180,14 @@ namespace Gearless
     template <class Event>
     inline void StateMachine<InitState, TransitionsPack>::ProcessEvent(const Event& ev)
     {
-        (void) ev;
+        for (const TransitionInfo& ti : mTransitionTbl)
+        {
+            if (ti.GetPrevStateTypeId() == mCurStateTypeId &&
+                ti.GetEventTypeId() == GetTypeId<Event>())
+            {
+                reinterpret_cast<void(*)(const Event&)>(ti.GetTransitionFn())(ev);
+            }
+        }
     }
 }
 
