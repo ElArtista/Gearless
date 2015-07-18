@@ -73,7 +73,7 @@ namespace Gearless
     template<typename T>
     TypeId GetTypeId()
     {
-        return TypeIdGen<remove_all<T>::type>::GetTypeId();
+        return TypeIdGen<typename remove_all<T>::type>::GetTypeId();
     }
 }
 
