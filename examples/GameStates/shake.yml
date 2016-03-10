@@ -1,0 +1,3 @@
+ProjectName: GameStates
+ProjectType: Executable
+AdditionalIncludes: ["../../include"]
