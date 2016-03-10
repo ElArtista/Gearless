@@ -136,7 +136,7 @@ namespace Gearless
     template <class... Transitions>
     struct ConvertToTransitionTable<Packer<Transitions...>>
     {
-        using type = typename ConvertToTransitionTable<Transitions...>::type;  
+        using type = typename ConvertToTransitionTable<Transitions...>::type;
     };
 
     ///==============================================================
