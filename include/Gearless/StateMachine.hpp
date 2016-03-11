@@ -185,6 +185,7 @@ namespace Gearless
             if (ti.GetPrevStateTypeId() == mCurStateTypeId &&
                 ti.GetEventTypeId() == GetTypeId<Event>())
             {
+                mCurStateTypeId = ti.GetNextStateTypeId();
                 reinterpret_cast<void(*)(const Event&)>(ti.GetTransitionFn())(ev);
             }
         }
