@@ -187,6 +187,7 @@ namespace Gearless
             {
                 mCurStateTypeId = ti.GetNextStateTypeId();
                 reinterpret_cast<void(*)(const Event&)>(ti.GetTransitionFn())(ev);
+                break;
             }
         }
     }
