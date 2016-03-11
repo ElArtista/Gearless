@@ -102,16 +102,25 @@ void StoppedAgain(const Stop&) { std::cout << "Playback already stopped." << std
         > {};
 */
 
-// The transitions
-using Transition1 = Gearless::Transition<Empty, OpenClose, Open, OpenDrawer>;
-using Transition2 = Gearless::Transition<Open, OpenClose, Empty, CloseDrawer>;
+// Alias to make the transition table more compact
+template <class PrevState, class Event, class NextState, typename Fn>
+using tr = Gearless::Transition<PrevState, Event, NextState, Fn>;
 
-// The table
-using TransitionTbl = Gearless::TransitionTable<Transition1, Transition2>;
+using OpenDrawerW  = Gearless::TFunct<OpenClose, OpenDrawer>;
+using CloseDrawerW = Gearless::TFunct<OpenClose, CloseDrawer>;
+
+// The transition table
+using TransitionTbl = Gearless::Packer<
+    //    Start       Event          Next        Action             Guard
+    //  +-----------+--------------+-----------+-------------------+------------+
+      tr< Empty,      OpenClose,     Open,       OpenDrawerW                    >,
+    //  +-----------+--------------+-----------+-------------------+------------+
+      tr< Open,       OpenClose,     Empty,      CloseDrawerW                   >
+    //  +-----------+--------------+-----------+-------------------+------------+
+>;
 
 // The initial state
 using InitState = Empty;
-
 
 ///==============================================================
 ///= Sample Usage
@@ -120,7 +129,7 @@ using InitState = Empty;
 void Test()
 {
     Gearless::StateMachine<InitState, TransitionTbl> sm;
-    //sm.Start();
+    sm.Start();
     sm.ProcessEvent(OpenClose());
     sm.ProcessEvent(OpenClose());
     /*
