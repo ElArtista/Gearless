@@ -77,46 +77,42 @@ void StoppedAgain(const Stop&) { std::cout << "Playback already stopped." << std
 ///==============================================================
 ///= Transition Table
 ///==============================================================
-/*
-        struct transition_table : mpl::vector<
-            //    Start     Event         Next      Action				 Guard
-            //  +---------+-------------+---------+---------------------+----------------------+
-          a_row < Stopped , play        , Playing , &p::start_playback                         >,
-          a_row < Stopped , open_close  , Open    , &p::open_drawer                            >,
-           _row < Stopped , stop        , Stopped                                              >,
-            //  +---------+-------------+---------+---------------------+----------------------+
-          a_row < Open    , open_close  , Empty   , &p::close_drawer                           >,
-            //  +---------+-------------+---------+---------------------+----------------------+
-          a_row < Empty   , open_close  , Open    , &p::open_drawer                            >,
-            row < Empty   , cd_detected , Stopped , &p::store_cd_info   ,&p::good_disk_format  >,
-            row < Empty   , cd_detected , Playing , &p::store_cd_info   ,&p::auto_start        >,
-            //  +---------+-------------+---------+---------------------+----------------------+
-          a_row < Playing , stop        , Stopped , &p::stop_playback                          >,
-          a_row < Playing , pause       , Paused  , &p::pause_playback                         >,
-          a_row < Playing , open_close  , Open    , &p::stop_and_open                          >,
-            //  +---------+-------------+---------+---------------------+----------------------+
-          a_row < Paused  , end_pause   , Playing , &p::resume_playback                        >,
-          a_row < Paused  , stop        , Stopped , &p::stop_playback                          >,
-          a_row < Paused  , open_close  , Open    , &p::stop_and_open                          >
-            //  +---------+-------------+---------+---------------------+----------------------+
-        > {};
-*/
-
-// Alias to make the transition table more compact
+// Aliases to make the transition table more compact
 template <class PrevState, class Event, class NextState, typename Fn>
 using tr = Gearless::Transition<PrevState, Event, NextState, Fn>;
 
 using OpenDrawerW  = Gearless::TFunct<OpenClose, OpenDrawer>;
 using CloseDrawerW = Gearless::TFunct<OpenClose, CloseDrawer>;
+using StoreCdInfoW = Gearless::TFunct<CdDetected, StoreCdInfo>;
+using StartPlaybackW = Gearless::TFunct<Play, StartPlayback>;
+using PausePlaybackW = Gearless::TFunct<Pause, PausePlayback>;
+using ResumePlaybackW = Gearless::TFunct<Play, ResumePlayback>;
+using StopPlaybackW = Gearless::TFunct<Stop, StopPlayback>;
+using StopAndOpenW = Gearless::TFunct<OpenClose, StopAndOpen>;
+using StoppedAgainW = Gearless::TFunct<Stop, StoppedAgain>;
 
 // The transition table
 using TransitionTbl = Gearless::Packer<
-    //    Start       Event          Next        Action             Guard
-    //  +-----------+--------------+-----------+-------------------+------------+
-      tr< Empty,      OpenClose,     Open,       OpenDrawerW                    >,
-    //  +-----------+--------------+-----------+-------------------+------------+
-      tr< Open,       OpenClose,     Empty,      CloseDrawerW                   >
-    //  +-----------+--------------+-----------+-------------------+------------+
+    //    Start     Event         Next      Action				 Guard
+    //  +---------+-------------+---------+---------------------+---------------+
+     tr < Stopped , Play        , Playing , StartPlaybackW                      >,
+     tr < Stopped , OpenClose   , Open    , OpenDrawerW                         >,
+     tr < Stopped , Stop        , Stopped , StoppedAgainW                       >,
+    //  +---------+-------------+---------+---------------------+---------------+
+     tr < Open    , OpenClose   , Empty   , CloseDrawerW                        >,
+    //  +---------+-------------+---------+---------------------+---------------+
+     tr < Empty   , OpenClose   , Open    , OpenDrawerW                         >,
+     tr < Empty   , CdDetected  , Stopped , StoreCdInfoW                        >,
+     tr < Empty   , CdDetected  , Playing , StoreCdInfoW                        >,
+    //  +---------+-------------+---------+---------------------+---------------+
+     tr < Playing , Stop        , Stopped , StopPlaybackW                       >,
+     tr < Playing , Pause       , Paused  , PausePlaybackW                      >,
+     tr < Playing , OpenClose   , Open    , StopAndOpenW                        >,
+    //  +---------+-------------+---------+---------------------+---------------+
+     tr < Paused  , EndPause    , Playing , ResumePlaybackW                     >,
+     tr < Paused  , Stop        , Stopped , StopPlaybackW                       >,
+     tr < Paused  , OpenClose   , Open    , StopAndOpenW                        >
+    //  +---------+-------------+---------+---------------------+---------------+
 >;
 
 // The initial state
@@ -132,15 +128,12 @@ void Test()
     sm.Start();
     sm.ProcessEvent(OpenClose());
     sm.ProcessEvent(OpenClose());
-    /*
-    //sm.ProcessEvent(OpenClose());
-    //sm.ProcessEvent(CdDetected("Bee Gees Spirits Having Flown", Cd));
-    //sm.ProcessEvent(Play());
-    //sm.ProcessEvent(Pause());
-    //sm.ProcessEvent(Stop());
-    //sm.ProcessEvent(Stop());
-    */
-    //sm.Stop();
+    sm.ProcessEvent(CdDetected("Bee Gees Spirits Having Flown", DiskType::Cd));
+    sm.ProcessEvent(Play());
+    sm.ProcessEvent(Pause());
+    sm.ProcessEvent(Stop());
+    sm.ProcessEvent(Stop());
+    sm.Stop();
 }
 
 int main()
